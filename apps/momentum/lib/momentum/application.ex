@@ -7,7 +7,19 @@ defmodule Momentum.Application do
 
   def start(_type, _args) do
     children = [
-      {Finch, name: Client},
+      {
+        Finch,
+        name: Client,
+        pools: %{
+          default: [
+            size: 10,
+            count: 1,
+            protocol: :http1,
+            max_idle_time: :infinity,
+            conn_opts: [transport_opts: [ciphers: :ssl.cipher_suites(:all)]]
+          ]
+        }
+      },
       # Start the PubSub system
       {Phoenix.PubSub, name: Momentum.PubSub}
       # Start a worker by calling: Momentum.Worker.start_link(arg)

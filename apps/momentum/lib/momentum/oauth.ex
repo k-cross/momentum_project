@@ -4,14 +4,14 @@ defmodule Momentum.OAuth do
 
   ## Examples
   ```elixir
-  creds = OAuth.credentials(consumer_key: "dpf43f3p2l4k3l03", consumer_secret: "kd94hf93k423kf44", token: "nnch734d00sl2jdk", token_secret: "pfkkdhi9sl3r4s00")
-  #=> %OAuth.Credentials{
-  #=>   consumer_key: "dpf43f3p2l4k3l03",
-  #=>   consumer_secret: "kd94hf93k423kf44",
-  #=>   method: :hmac_sha1,
-  #=>   token: "nnch734d00sl2jdk",
-  #=>   token_secret: "pfkkdhi9sl3r4s00"
-  #=> }
+  creds = %OAuth.Credentials{
+     consumer_key: "dpf43f3p2l4k3l03",
+     consumer_secret: "kd94hf93k423kf44",
+     method: :hmac_sha1,
+     token: "nnch734d00sl2jdk",
+     token_secret: "pfkkdhi9sl3r4s00"
+  }
+
   params = OAuth.sign("post", "https://api.twitter.com/1.1/statuses/lookup.json", [{"id", 485086311205048320}], creds)
   #=> [
   #=>   {"oauth_signature", "ariK9GrGLzeEJDwQcmOTlf7jxeo="},
@@ -31,7 +31,7 @@ defmodule Momentum.OAuth do
   #=> {:ok, 200, [...], #Reference<0.0.0.837>}
   ```
 
-  Implementation was slightly modified from OAuther.
+  Implementation was inspired by OAuther.
   Copyright (c) 2014, Aleksei Magusev <lexmag@me.com>
   """
 
@@ -55,16 +55,21 @@ defmodule Momentum.OAuth do
 
   @type params :: [{String.t(), String.Chars.t()}]
   @type header :: {String.t(), String.t()}
+  @type url_verb :: :get | :post | :delete | :put | :patch
 
-  @spec credentials(Enumerable.t()) :: Credentials.t() | no_return
-  def credentials(args) do
-    Enum.reduce(args, %Credentials{}, fn {key, val}, acc -> :maps.update(key, val, acc) end)
+  @spec request_token(request_token_params :: map(), url_verb()) :: {header(), params()}
+  def request_token(rt_params, url_verb) do
+    creds = struct(Credentials, rt_params)
+
+    url_verb
+    |> sign(rt_params.url, rt_params.options, creds)
+    |> header()
   end
 
-  @spec sign(String.t(), URI.t() | String.t(), params, Credentials.t()) :: params
+  @spec sign(url_verb(), URI.t() | String.t(), params, Credentials.t()) :: params
   def sign(verb, url, params, %Credentials{} = creds) do
     params = protocol_params(params, creds)
-    signature = signature(verb, url, params, creds)
+    signature = signature(to_string(verb), url, params, creds)
 
     [{"oauth_signature", signature} | params]
   end
