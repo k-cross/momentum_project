@@ -16,7 +16,7 @@ defmodule Momentum.Application do
             count: 1,
             protocol: :http1,
             max_idle_time: :infinity,
-            conn_opts: [transport_opts: [ciphers: :ssl.cipher_suites(:all)]]
+            conn_opts: [transport_opts: [ciphers: :ssl.cipher_suites(:all, :"tlsv1.2")]]
           ]
         }
       },
